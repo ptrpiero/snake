@@ -1,32 +1,29 @@
 // app  =========================================
 
 function init(Snake, Food, speed) {
-
     Food.place()
-
-    if (isIn(Snake.body(), Food.position()))
-        return init(Snake, Food, speed)
-
+    if (isIn(Snake.body(), Food.position())) return init(Snake, Food, speed)
     return play(Snake, Food, speed)
 }
 
 function play(Snake, Food, speed) {
 
+    document.addEventListener(
+        "keydown",
+        ({ keyCode: code }) => turn(code, Snake),
+        { once: true }
+    )
+
     return setTimeout(game, speed, Snake, Food)
 
     function game(Snake, Food) {
-        
-        let food = Food.position()
+        const food = Food.position()
 
         drawBord(Snake, Food)
-
         Snake.move()
 
-        if (Snake.clash())
-            return
-
-        if (!Snake.meets(food))
-            return play(Snake, Food, speed)
+        if (Snake.clash()) return
+        if (!Snake.meets(food)) return play(Snake, Food, speed)
 
         Snake.eats(food)
         return init(Snake, Food, speed - speed * 1 / 54)
@@ -38,6 +35,13 @@ function play(Snake, Food, speed) {
         Food.render()
     }
 
+    function turn(code) {
+        if (![37, 38, 39, 40].includes(code)) return
+        if (code === 37) Snake.turn('left')  // left  0
+        if (code === 38) Snake.turn('down')  // down  1
+        if (code === 39) Snake.turn('rigth') // rigth 2
+        if (code === 40) Snake.turn('up')    // up    3
+    }
 }
 
 // models  =========================================
@@ -52,31 +56,40 @@ const Food = ((food) => {
 
 const Snake = (() => {
 
-    var direction = Math.floor(Math.random() * 4);
+    const _stack = []
+    var direction = Math.floor(Math.random() * 4)
     var snake = ((head = cell(), len = 4) => {
         let snake = new Array(len).fill(head)
-        if (direction === 0) return snake.map(({ x, y }, i) => border({ x: cohor(x) + 1, y: cohor(y) }))
-        if (direction === 1) return snake.map(({ x, y }, i) => border({ x: cohor(x), y: cohor(y) + 1 }))
-        if (direction === 2) return snake.map(({ x, y }, i) => border({ x: cohor(x) - 1, y: cohor(y) }))
-        if (direction === 3) return snake.map(({ x, y }, i) => border({ x: cohor(x) - 1, y: cohor(y) }))
+        if (direction === 0)
+            return snake.map(({ x, y }, i) =>
+                border({ x: cohor(x) + i, y: cohor(y) }))
+        if (direction === 1)
+            return snake.map(({ x, y }, i) =>
+                border({ x: cohor(x), y: cohor(y) + i }))
+        if (direction === 2)
+            return snake.map(({ x, y }, i) =>
+                border({ x: cohor(x) - i, y: cohor(y) }))
+        if (direction === 3)
+            return snake.map(({ x, y }, i) =>
+                border({ x: cohor(x), y: cohor(y) - i }))
     })()
-    const _stack = []
-
-    document.addEventListener("keydown", ({ keyCode: code }) => {
-        if (code === 37 && direction !== 2) direction = 0; // left  0
-        if (code === 38 && direction !== 3) direction = 1; // down  1
-        if (code === 39 && direction !== 0) direction = 2; // rigth 2
-        if (code === 40 && direction !== 1) direction = 3; // up    3
-    })
 
     return {
         head: () => snake[0],
+        body: () => snake,
+        move: () => snake = move(),
+        turn: (where) => turn(where),
         meets: (thing) => equals(snake[0], thing),
-        render: () => snake.forEach(p => render('black', p)),
         clash: (thing = snake[0]) => isIn(snake.slice(1), thing),
         eats: (food) => _stack.push(food),
-        move: () => snake = move(),
-        body: () => snake
+        render: () => snake.forEach(p => render('black', p)),
+    }
+
+    function turn(where) {
+        if (where === 'left' && direction !== 2) direction = 0
+        if (where === 'down' && direction !== 3) direction = 1
+        if (where === 'rigth' && direction !== 0) direction = 2
+        if (where === 'up' && direction !== 1) direction = 3
     }
 
     function move() {
@@ -94,22 +107,8 @@ const Snake = (() => {
             snake.push(_stack.pop())
         }
 
-        return snake;
-
+        return snake
     }
-
-    function border({ x, y }, max = Math.floor(width / length) - 1) {
-        if (x < 0) x = max
-        if (y < 0) y = max
-        if (x > max) x = 0
-        if (y > max) y = 0
-        return { x, y, } = cell(x, y)
-    }
-
-    function cohor(n) {
-        return Math.floor(n / length)
-    }
-
 })()
 
 // utils ===================================
@@ -140,8 +139,20 @@ function isIn(line, point) {
     return line.some((part) => equals(part, point))
 }
 
+function border({ x, y }, max = Math.floor(width / length) - 1) {
+    if (x < 0) x = max
+    if (y < 0) y = max
+    if (x > max) x = 0
+    if (y > max) y = 0
+    return { x, y, } = cell(x, y)
+}
+
+function cohor(n) {
+    return Math.floor(n / length)
+}
+
 // run =====================================
 
-init(Snake, Food, 160)
+init(Snake, Food, 150)
 
 
