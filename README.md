@@ -6,4 +6,4 @@ This is an attempt to rewrite the classic game snake, following functional progr
 
 Control snake with arrow keys. Game ends when snake collides with itself. To run a new game, refresh the page.
 
-For any issue or question feel free to email me.
+For any issue or question related to the code feel free to get in touch with me.
