@@ -35,7 +35,7 @@ const Game = (() => {
             Snake.eats(food)
             return init(Snake, Food, speed - speed * 1 / 54)
         }
-
+        
         function drawBord(Snake, Food) {
             render()
             Snake.render()
@@ -45,6 +45,12 @@ const Game = (() => {
 })()
 
 // utils ===================================
+
+function render(color = 'white', { x, y, l } = { x: 0, y: 0, l: width }) {
+    const canvas = document.getElementById('board').getContext('2d')
+    canvas.fillStyle = color
+    canvas.fillRect(x, y, l, l)
+}    
 
 function cell(x, y) {
     return {
@@ -58,19 +64,28 @@ function cell(x, y) {
     }
 }
 
-function render(color = 'white', { x, y, l } = { x: 0, y: 0, l: width }) {
-    const canvas = document.getElementById('board').getContext('2d')
-    canvas.fillStyle = color
-    canvas.fillRect(x, y, l, l)
-}
+function coordinates({ x, y }) {
+    return {
+        x: Math.floor(x / length),
+        y: Math.floor(y / length)
+    }
+}    
 
-function equals({ x: ax, y: ay }, { x: bx, y: by }) {
-    return ax === bx && ay === by
-}
+const directions = (function (directions = {}) {
+    ['left', 'up', 'rigth', 'down'].forEach((direction, i) => {
+        directions[direction] = i
+        directions[i] = direction
+    })
+    return directions
+})()
 
-function isIn(line, point) {
-    return line.some((part) => equals(part, point))
-}
+function shift({ x, y }, direction, i = 1) {
+
+    if (direction === directions[0]) return { x: x - i, y } // left
+    if (direction === directions[1]) return { x, y: y - i } // up
+    if (direction === directions[2]) return { x: x + i, y } // rigth
+    if (direction === directions[3]) return { x, y: y + i } // down
+}    
 
 function place({ x, y }, max = Math.floor(width / length) - 1) {
     if (x < 0) x = max
@@ -78,29 +93,15 @@ function place({ x, y }, max = Math.floor(width / length) - 1) {
     if (x > max) x = 0
     if (y > max) y = 0
     return { x, y, } = cell(x, y)
-}
+}    
 
-function coordinates({ x, y }) {
-    return {
-        x: Math.floor(x / length),
-        y: Math.floor(y / length)
-    }
-}
+function equals({ x: ax, y: ay }, { x: bx, y: by }) {
+    return ax === bx && ay === by
+}    
 
-function shift({ x, y }, direction, i = 1) {
-    if (direction === directions[0]) return { x: x - i, y } // left
-    if (direction === directions[1]) return { x, y: y - i } // down
-    if (direction === directions[2]) return { x: x + i, y } // rigth
-    if (direction === directions[3]) return { x, y: y + i } // up
-}
-
-const directions = (function (directions = {}) {
-    ['left', 'down', 'rigth', 'up'].forEach((direction, i) => {
-        directions[direction] = i
-        directions[i] = direction
-    })
-    return directions
-})()
+function isIn(line, point) {
+    return line.some((part) => equals(part, point))
+}    
 
 // models  =========================================
 
@@ -119,8 +120,8 @@ const Snake = ((
     direction = Math.floor(Math.random() * 4),
     snake = ((head = cell(), len = 4) => {
         let snake = new Array(len).fill(head)
-        return snake.map(({x,y}) => place(
-            shift(coordinates({x,y}), directions[direction])))
+        return snake.map(({x,y},i) => place(
+            shift(coordinates({x,y}), directions[direction],i*-1)))
     })(),
     _stack = []
 
@@ -138,14 +139,15 @@ const Snake = ((
     }
 
     function turn(code) {
-        if (code === 37 && direction !== directions['right'])
+        if(![37,38,39,40].includes(code)) return
+        if (code === 37 && direction !== directions['rigth'])
             direction = directions['left']
-        if (code === 38 && direction !== directions['up'])
-            direction = directions['down']
+        if (code === 38 && direction !== directions['down'])
+            direction = directions['up']
         if (code === 39 && direction !== directions['left'])
             direction = directions['rigth']
-        if (code === 40 && direction !== directions['down'])
-            direction = directions['up']
+        if (code === 40 && direction !== directions['up'])
+            direction = directions['down']
     }
 
     function move() {
