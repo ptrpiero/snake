@@ -90,10 +90,14 @@ const Snake = ((
     }
 
     function turn(code) {
-        if (code === 37) direction = directions['left']
-        if (code === 38) direction = directions['down']
-        if (code === 39) direction = directions['rigth']
-        if (code === 40) direction = directions['up']
+        if (code === 37 && direction !== directions['right'])
+            direction = directions['left']
+        if (code === 38 && direction !== directions['up'])
+            direction = directions['down']
+        if (code === 39 && direction !== directions['left'])
+            direction = directions['rigth']
+        if (code === 40 && direction !== directions['down'])
+            direction = directions['up']
     }
 
     function move() {
