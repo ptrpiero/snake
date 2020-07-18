@@ -63,16 +63,16 @@ const Snake = ((
         let snake = new Array(len).fill(head)
         if (direction === 0)
             return snake.map(({ x, y }, i) =>
-                border({ x: cohor(x) + i, y: cohor(y) }))
+                place({ x: cohor(x) + i, y: cohor(y) }))
         if (direction === 1)
             return snake.map(({ x, y }, i) =>
-                border({ x: cohor(x), y: cohor(y) + i }))
+                place({ x: cohor(x), y: cohor(y) + i }))
         if (direction === 2)
             return snake.map(({ x, y }, i) =>
-                border({ x: cohor(x) - i, y: cohor(y) }))
+                place({ x: cohor(x) - i, y: cohor(y) }))
         if (direction === 3)
             return snake.map(({ x, y }, i) =>
-                border({ x: cohor(x), y: cohor(y) - i }))
+                place({ x: cohor(x), y: cohor(y) - i }))
     })(),
     _stack = []
 
@@ -103,10 +103,10 @@ const Snake = ((
     function move() {
 
         snake.splice(0, 0, ([
-            ({ x, y }) => border({ x: cohor(x) - 1, y: cohor(y) }),
-            ({ x, y }) => border({ x: cohor(x), y: cohor(y) - 1 }),
-            ({ x, y }) => border({ x: cohor(x) + 1, y: cohor(y) }),
-            ({ x, y }) => border({ x: cohor(x), y: cohor(y) + 1 })
+            ({ x, y }) => place({ x: cohor(x) - 1, y: cohor(y) }),
+            ({ x, y }) => place({ x: cohor(x), y: cohor(y) - 1 }),
+            ({ x, y }) => place({ x: cohor(x) + 1, y: cohor(y) }),
+            ({ x, y }) => place({ x: cohor(x), y: cohor(y) + 1 })
         ][direction])(snake[0]))
 
         snake.pop()
@@ -147,7 +147,7 @@ function isIn(line, point) {
     return line.some((part) => equals(part, point))
 }
 
-function border({ x, y }, max = Math.floor(width / length) - 1) {
+function place({ x, y }, max = Math.floor(width / length) - 1) {
     if (x < 0) x = max
     if (y < 0) y = max
     if (x > max) x = 0
