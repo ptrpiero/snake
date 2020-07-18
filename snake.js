@@ -17,7 +17,7 @@ const Game = (() => {
     
         document.addEventListener(
             "keydown",
-            ({ keyCode: code }) => turn(code, Snake),
+            ({ keyCode: code }) => Snake.turn(code),
             { once: true }
         )
     
@@ -41,14 +41,6 @@ const Game = (() => {
             Snake.render()
             Food.render()
         }
-    
-        function turn(code) {
-            if (![37, 38, 39, 40].includes(code)) return
-            if (code === 37) Snake.turn('left')  // left  0
-            if (code === 38) Snake.turn('down')  // down  1
-            if (code === 39) Snake.turn('rigth') // rigth 2
-            if (code === 40) Snake.turn('up')    // up    3
-        }
     }
 })()
 
@@ -62,11 +54,9 @@ const Food = ((food) => {
     }
 })()
 
-const Snake = (() => {
-
-    const _stack = []
-    var direction = Math.floor(Math.random() * 4)
-    var snake = ((head = cell(), len = 4) => {
+const Snake = ((
+    direction = Math.floor(Math.random() * 4),
+    snake = ((head = cell(), len = 4) => {
         let snake = new Array(len).fill(head)
         if (direction === 0)
             return snake.map(({ x, y }, i) =>
@@ -80,7 +70,9 @@ const Snake = (() => {
         if (direction === 3)
             return snake.map(({ x, y }, i) =>
                 border({ x: cohor(x), y: cohor(y) - i }))
-    })()
+    })(),
+    _stack = []
+) => {
 
     return {
         head: () => snake[0],
@@ -93,11 +85,11 @@ const Snake = (() => {
         render: () => snake.forEach(p => render('black', p)),
     }
 
-    function turn(where) {
-        if (where === 'left' && direction !== 2) direction = 0
-        if (where === 'down' && direction !== 3) direction = 1
-        if (where === 'rigth' && direction !== 0) direction = 2
-        if (where === 'up' && direction !== 1) direction = 3
+    function turn(code) {
+        if (code === 37) direction = directions['left']
+        if (code === 38) direction = directions['down'] 
+        if (code === 39) direction = directions['rigth']
+        if (code === 40) direction = directions['up'] 
     }
 
     function move() {
@@ -159,6 +151,19 @@ function cohor(n) {
     return Math.floor(n / length)
 }
 
+const directions = (function (directions = {}) {
+    [
+        'left',     // 0
+        'down',     // 1
+        'rigth',    // 2
+        'up'        // 3
+    ].forEach((direction,i) => {
+        directions[direction] = i
+        directions[i] = direction
+    })
+    return directions
+})()
+    
 // run ===================================
 
 Game.init(Snake, Food, 150)
