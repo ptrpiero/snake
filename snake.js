@@ -44,81 +44,6 @@ const Game = (() => {
     }
 })()
 
-// models  =========================================
-
-const Food = ((food) => {
-
-    return {
-        place: () => { return food = cell() },
-        position: () => (food),
-        render: () => render('green', food)
-    }
-
-})()
-
-const Snake = ((
-
-    direction = Math.floor(Math.random() * 4),
-    snake = ((head = cell(), len = 4) => {
-        let snake = new Array(len).fill(head)
-        if (direction === 0)
-            return snake.map(({ x, y }, i) =>
-                place({ x: cohor(x) + i, y: cohor(y) }))
-        if (direction === 1)
-            return snake.map(({ x, y }, i) =>
-                place({ x: cohor(x), y: cohor(y) + i }))
-        if (direction === 2)
-            return snake.map(({ x, y }, i) =>
-                place({ x: cohor(x) - i, y: cohor(y) }))
-        if (direction === 3)
-            return snake.map(({ x, y }, i) =>
-                place({ x: cohor(x), y: cohor(y) - i }))
-    })(),
-    _stack = []
-
-) => {
-
-    return {
-        head: () => snake[0],
-        body: () => snake,
-        move: () => snake = move(),
-        turn: (where) => turn(where),
-        meets: (thing) => equals(snake[0], thing),
-        clash: (thing = snake[0]) => isIn(snake.slice(1), thing),
-        eats: (food) => _stack.push(food),
-        render: () => snake.forEach(p => render('black', p)),
-    }
-
-    function turn(code) {
-        if (code === 37 && direction !== directions['right'])
-            direction = directions['left']
-        if (code === 38 && direction !== directions['up'])
-            direction = directions['down']
-        if (code === 39 && direction !== directions['left'])
-            direction = directions['rigth']
-        if (code === 40 && direction !== directions['down'])
-            direction = directions['up']
-    }
-
-    function move() {
-
-        snake.splice(0, 0, ([
-            ({ x, y }) => place({ x: cohor(x) - 1, y: cohor(y) }),
-            ({ x, y }) => place({ x: cohor(x), y: cohor(y) - 1 }),
-            ({ x, y }) => place({ x: cohor(x) + 1, y: cohor(y) }),
-            ({ x, y }) => place({ x: cohor(x), y: cohor(y) + 1 })
-        ][direction])(snake[0]))
-
-        snake.pop()
-
-        if (_stack.length > 0 && !isIn(snake, _stack[0])) {
-            snake.push(_stack.pop())
-        }
-
-        return snake
-    }
-})()
-
 // utils ===================================
 
 function cell(x, y) {
@@ -155,21 +80,85 @@ function place({ x, y }, max = Math.floor(width / length) - 1) {
     return { x, y, } = cell(x, y)
 }
 
-function cohor(n) {
-    return Math.floor(n / length)
+function coordinates({ x, y }) {
+    return {
+        x: Math.floor(x / length),
+        y: Math.floor(y / length)
+    }
+}
+
+function shift({ x, y }, direction, i = 1) {
+    if (direction === directions[0]) return { x: x - i, y } // left
+    if (direction === directions[1]) return { x, y: y - i } // down
+    if (direction === directions[2]) return { x: x + i, y } // rigth
+    if (direction === directions[3]) return { x, y: y + i } // up
 }
 
 const directions = (function (directions = {}) {
-    [
-        'left',     // 0
-        'down',     // 1
-        'rigth',    // 2
-        'up'        // 3
-    ].forEach((direction, i) => {
+    ['left', 'down', 'rigth', 'up'].forEach((direction, i) => {
         directions[direction] = i
         directions[i] = direction
     })
     return directions
+})()
+
+// models  =========================================
+
+const Food = ((food) => {
+
+    return {
+        place: () => { return food = cell() },
+        position: () => (food),
+        render: () => render('green', food)
+    }
+
+})()
+
+const Snake = ((
+
+    direction = Math.floor(Math.random() * 4),
+    snake = ((head = cell(), len = 4) => {
+        let snake = new Array(len).fill(head)
+        return snake.map(({x,y}) => place(
+            shift(coordinates({x,y}), directions[direction])))
+    })(),
+    _stack = []
+
+) => {
+
+    return {
+        head: () => snake[0],
+        body: () => snake,
+        move: () => snake = move(),
+        turn: (where) => turn(where),
+        meets: (thing) => equals(snake[0], thing),
+        clash: (thing = snake[0]) => isIn(snake.slice(1), thing),
+        eats: (food) => _stack.push(food),
+        render: () => snake.forEach(p => render('black', p)),
+    }
+
+    function turn(code) {
+        if (code === 37 && direction !== directions['right'])
+            direction = directions['left']
+        if (code === 38 && direction !== directions['up'])
+            direction = directions['down']
+        if (code === 39 && direction !== directions['left'])
+            direction = directions['rigth']
+        if (code === 40 && direction !== directions['down'])
+            direction = directions['up']
+    }
+
+    function move() {
+        snake.splice(0, 0,
+            place(shift(coordinates(snake[0]), directions[direction]))
+        )
+        snake.pop()
+
+        if (_stack.length > 0 && !isIn(snake, _stack[0])) {
+            snake.push(_stack.pop())
+        }
+        return snake
+    }
 })()
 
 // run ===================================
