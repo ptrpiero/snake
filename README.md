@@ -1,6 +1,6 @@
 # Snake
 
-### A pseudo functional, simple, javascript snake version
+### A pseudo functional javascript snake version
 
 This is an attempt to rewrite the classic game snake, following functional programming principles. You can play it at [https://ptrpiero.github.io/snake/](https://ptrpiero.github.io/snake/)
 
