@@ -1,48 +1,56 @@
-// app  =========================================
+// game =========================================
 
-function init(Snake, Food, speed) {
-    Food.place()
-    if (isIn(Snake.body(), Food.position())) return init(Snake, Food, speed)
-    return play(Snake, Food, speed)
-}
+const Game = (() => {
 
-function play(Snake, Food, speed) {
-
-    document.addEventListener(
-        "keydown",
-        ({ keyCode: code }) => turn(code, Snake),
-        { once: true }
-    )
-
-    return setTimeout(game, speed, Snake, Food)
-
-    function game(Snake, Food) {
-        const food = Food.position()
-
-        drawBord(Snake, Food)
-        Snake.move()
-
-        if (Snake.clash()) return
-        if (!Snake.meets(food)) return play(Snake, Food, speed)
-
-        Snake.eats(food)
-        return init(Snake, Food, speed - speed * 1 / 54)
+    return {
+        init
     }
 
-    function drawBord(Snake, Food) {
-        render()
-        Snake.render()
-        Food.render()
+    function init(Snake, Food, speed) {
+        Food.place()
+        if (isIn(Snake.body(), Food.position()))
+            return init(Snake, Food, speed)
+        return play(Snake, Food, speed)
     }
-
-    function turn(code) {
-        if (![37, 38, 39, 40].includes(code)) return
-        if (code === 37) Snake.turn('left')  // left  0
-        if (code === 38) Snake.turn('down')  // down  1
-        if (code === 39) Snake.turn('rigth') // rigth 2
-        if (code === 40) Snake.turn('up')    // up    3
+    
+    function play(Snake, Food, speed) {
+    
+        document.addEventListener(
+            "keydown",
+            ({ keyCode: code }) => turn(code, Snake),
+            { once: true }
+        )
+    
+        return setTimeout(round, speed, Snake, Food)
+    
+        function round(Snake, Food) {
+            const food = Food.position()
+    
+            drawBord(Snake, Food)
+            Snake.move()
+    
+            if (Snake.clash()) return
+            if (!Snake.meets(food)) return play(Snake, Food, speed)
+    
+            Snake.eats(food)
+            return init(Snake, Food, speed - speed * 1 / 54)
+        }
+    
+        function drawBord(Snake, Food) {
+            render()
+            Snake.render()
+            Food.render()
+        }
+    
+        function turn(code) {
+            if (![37, 38, 39, 40].includes(code)) return
+            if (code === 37) Snake.turn('left')  // left  0
+            if (code === 38) Snake.turn('down')  // down  1
+            if (code === 39) Snake.turn('rigth') // rigth 2
+            if (code === 40) Snake.turn('up')    // up    3
+        }
     }
-}
+})()
 
 // models  =========================================
 
@@ -151,8 +159,7 @@ function cohor(n) {
     return Math.floor(n / length)
 }
 
-// run =====================================
+// run ===================================
 
-init(Snake, Food, 150)
-
+Game.init(Snake, Food, 150)
 
