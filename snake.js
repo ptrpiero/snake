@@ -12,30 +12,30 @@ const Game = (() => {
             return init(Snake, Food, speed)
         return play(Snake, Food, speed)
     }
-    
+
     function play(Snake, Food, speed) {
-    
+
         document.addEventListener(
             "keydown",
             ({ keyCode: code }) => Snake.turn(code),
             { once: true }
         )
-    
+
         return setTimeout(round, speed, Snake, Food)
-    
+
         function round(Snake, Food) {
             const food = Food.position()
-    
+
             drawBord(Snake, Food)
             Snake.move()
-    
+
             if (Snake.clash()) return
             if (!Snake.meets(food)) return play(Snake, Food, speed)
-    
+
             Snake.eats(food)
             return init(Snake, Food, speed - speed * 1 / 54)
         }
-    
+
         function drawBord(Snake, Food) {
             render()
             Snake.render()
@@ -47,14 +47,17 @@ const Game = (() => {
 // models  =========================================
 
 const Food = ((food) => {
+
     return {
         place: () => { return food = cell() },
         position: () => (food),
         render: () => render('green', food)
     }
+
 })()
 
 const Snake = ((
+
     direction = Math.floor(Math.random() * 4),
     snake = ((head = cell(), len = 4) => {
         let snake = new Array(len).fill(head)
@@ -72,6 +75,7 @@ const Snake = ((
                 border({ x: cohor(x), y: cohor(y) - i }))
     })(),
     _stack = []
+
 ) => {
 
     return {
@@ -87,9 +91,9 @@ const Snake = ((
 
     function turn(code) {
         if (code === 37) direction = directions['left']
-        if (code === 38) direction = directions['down'] 
+        if (code === 38) direction = directions['down']
         if (code === 39) direction = directions['rigth']
-        if (code === 40) direction = directions['up'] 
+        if (code === 40) direction = directions['up']
     }
 
     function move() {
@@ -157,13 +161,13 @@ const directions = (function (directions = {}) {
         'down',     // 1
         'rigth',    // 2
         'up'        // 3
-    ].forEach((direction,i) => {
+    ].forEach((direction, i) => {
         directions[direction] = i
         directions[i] = direction
     })
     return directions
 })()
-    
+
 // run ===================================
 
 Game.init(Snake, Food, 150)
