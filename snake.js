@@ -3,6 +3,8 @@
 
 const Game = (() => {
 
+    let listener
+
     return {
         init
     }
@@ -11,20 +13,13 @@ const Game = (() => {
         Food.place()
         if (isIn(Snake.body(), Food.position()))
             return init(Snake, Food, speed)
+        listener = Listener(Snake)
+        listener.start()
         return play(Snake, Food, speed)
     }
 
     function play(Snake, Food, speed) {
-
-        document.addEventListener(
-            "keydown",
-            ({ keyCode }) => {
-                if (![37, 38, 39, 40].includes(keyCode)) return
-                Snake.turn(keyCode - 37)
-            },
-            { once: true }
-        )
-
+        
         return setTimeout(round, speed, Snake, Food)
 
         function round(Snake, Food) {
@@ -47,6 +42,17 @@ const Game = (() => {
         }
     }
 })()
+
+function Listener(snake){
+    const keyHandler = ({ code }) => {
+        if (!code.includes('Arrow')) return
+        snake.turn(directions[code.replace('Arrow','').toLocaleLowerCase()])
+    }
+    return {
+        start: () => document.addEventListener("keydown",keyHandler),
+        stop: () => document.removeEventListener("keydown",keyHandler)
+    }
+}
 
 // utils ===================================
 
@@ -76,7 +82,7 @@ function coordinates({ x, y }) {
 }
 
 const directions = (function (directions = {}) {
-    ['left', 'up', 'rigth', 'down'].forEach((direction, i) => {
+    ['left', 'up', 'right', 'down'].forEach((direction, i) => {
         directions[direction] = i
         directions[i] = direction
     })
@@ -142,7 +148,7 @@ const Snake = ((
     }
 
     function turn(code) {
-        if (code === 0 && direction === directions['rigth'])    return
+        if (code === 0 && direction === directions['right'])    return
         if (code === 1 && direction === directions['down'])     return
         if (code === 2 && direction === directions['left'])     return
         if (code === 3 && direction === directions['up'])       return
