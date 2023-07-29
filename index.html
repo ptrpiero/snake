@@ -5,12 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <title>Snake</title>
+    <style>
+        body, html {
+            /*margin: 0;*/
+            /*padding: 0;*/
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        canvas {
+            margin: 0;
+            padding: 0;
+            display: block;
+            /*height: 100%;*/
+            /*width: 100%;*/
+
+        }
+    </style>
+
 </head>
 <body>
-    <canvas id='board' style="border: 1px solid black;" clean width="816" height="816"></canvas>    
+        <canvas id='board' style="border: 1px solid black;" ></canvas>
     <script>
-        const width = 816;
-        const length = 48;
+        function resizeCanvas() {
+            const canvas = document.getElementById('board');
+            const width = window.innerWidth
+            const height = window.innerHeight;
+            const length = Number.parseInt(((width > height ? height : width) * 0.9).toString())
+            canvas.width = length;
+            canvas.height = length;
+            return length
+        }
+
+        const width = resizeCanvas()
+        const length = Number.parseInt((width / 17).toString())
     </script>
     <script src="snake.js"></script>
 </body>
