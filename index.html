@@ -7,20 +7,13 @@
     <title>Snake</title>
     <style>
         body, html {
-            /*margin: 0;*/
-            /*padding: 0;*/
             width: 100%;
             height: 100%;
             overflow: hidden;
         }
 
         canvas {
-            margin: 0;
-            padding: 0;
             display: block;
-            /*height: 100%;*/
-            /*width: 100%;*/
-
         }
     </style>
 
@@ -28,18 +21,21 @@
 <body>
         <canvas id='board' style="border: 1px solid black;" ></canvas>
     <script>
-        function resizeCanvas() {
-            const canvas = document.getElementById('board');
+        function getLengthWidth() {
             const width = window.innerWidth
             const height = window.innerHeight;
             const length = Number.parseInt(((width > height ? height : width) * 0.9).toString())
-            canvas.width = length;
-            canvas.height = length;
-            return length
+            const square = Number.parseInt((length / 17).toString())
+            return {
+                width: square * 17,
+                length: square
+            }
         }
+        const {width,length} = getLengthWidth()
+        const canvas = document.getElementById('board')
+        canvas.width = width
+        canvas.height = width
 
-        const width = resizeCanvas()
-        const length = Number.parseInt((width / 17).toString())
     </script>
     <script src="snake.js"></script>
 </body>
