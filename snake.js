@@ -10,11 +10,15 @@ const Game = (() => {
     }
 
     function init(Snake, Food, speed) {
-        Food.place()
-        if (isIn(Snake.body(), Food.position()))
-            return init(Snake, Food, speed)
         listener = Listener(Snake)
         listener.start()
+        return feed(Snake, Food, speed)
+    }
+
+    function feed(Snake, Food, speed) {
+        Food.place()
+        if (isIn(Snake.body(), Food.position()))
+            return feed(Snake, Food, speed)
         return play(Snake, Food, speed)
     }
 
@@ -28,11 +32,11 @@ const Game = (() => {
             drawBord(Snake, Food)
             Snake.move()
 
-            if (Snake.clash()) return
+            if (Snake.clash()) return listener.stop()
             if (!Snake.meets(food)) return play(Snake, Food, speed)
 
             Snake.eats(food)
-            return init(Snake, Food, speed - speed * 1 / 54)
+            return feed(Snake, Food, speed - speed * 1 / 54)
         }
 
         function drawBord(Snake, Food) {
