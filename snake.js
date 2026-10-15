@@ -3,6 +3,8 @@
 
 const Game = (() => {
 
+    const MIN_DELAY = 60 // ms
+
     let listener
 
     return {
@@ -33,7 +35,7 @@ const Game = (() => {
             if (Snake.clash()) return over(Snake, Food)
             if (Snake.meets(food)) {
                 Snake.eats(food)
-                return feed(Snake, Food, speed - speed * 1 / 54)
+                return feed(Snake, Food, Math.max(MIN_DELAY, speed - speed / 54))
             }
             drawBord(Snake, Food)
             return play(Snake, Food, speed)
