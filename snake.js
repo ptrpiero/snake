@@ -168,7 +168,7 @@ const Snake = ((
         moved = direction
 
         if (_stack.length > 0 && !isIn(snake, _stack[0])) {
-            snake.push(_stack.pop())
+            snake.push(_stack.shift())
         }
         return snake
     }
