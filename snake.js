@@ -16,9 +16,7 @@ const Game = (() => {
     }
 
     function feed(Snake, Food, speed) {
-        Food.place()
-        if (isIn(Snake.body(), Food.position()))
-            return feed(Snake, Food, speed)
+        if (!Food.place(Snake.body())) return over(Snake, Food, 'You win!')
         drawBord(Snake, Food)
         return play(Snake, Food, speed)
     }
@@ -42,10 +40,10 @@ const Game = (() => {
         }
     }
 
-    function over(Snake, Food) {
+    function over(Snake, Food, text = 'Game over') {
         listener.stop()
         drawBord(Snake, Food)
-        message('Game over')
+        message(text)
     }
 
     function drawBord(Snake, Food) {
@@ -95,6 +93,10 @@ function cell(x, y) {
     }
 }
 
+function cells(n = Math.floor(width / length)) {
+    return Array.from({ length: n * n }, (_, i) => cell(i % n, Math.floor(i / n)))
+}
+
 function coordinates({ x, y }) {
     return {
         x: Math.floor(x / length),
@@ -138,9 +140,12 @@ function isIn(line, point) {
 const Food = ((food) => {
 
     return {
-        place: () => { return food = cell() },
+        place: (taken = []) => {
+            const free = cells().filter((c) => !isIn(taken, c))
+            return food = free[Math.floor(Math.random() * free.length)]
+        },
         position: () => (food),
-        render: () => render('green', food)
+        render: () => food && render('green', food)
     }
 
 })()
