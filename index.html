@@ -2,41 +2,85 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <title>Snake</title>
     <style>
-        body, html {
+        html, body {
+            margin: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
+            overscroll-behavior: none;
+            background: white;
+            font-family: system-ui, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            height: 100dvh;
+            padding:
+                env(safe-area-inset-top)
+                env(safe-area-inset-right)
+                env(safe-area-inset-bottom)
+                env(safe-area-inset-left);
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 16px;
+        }
+
+        header div {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            font: inherit;
+            min-height: 44px;
+            padding: 0 16px;
+            touch-action: manipulation;
+        }
+
+        #stage {
+            flex: 1;
+            min-height: 0;
+            padding: 0 8px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
         }
 
         canvas {
             display: block;
+            border: 1px solid black;
+            touch-action: none;
         }
     </style>
-
 </head>
 <body>
-        <canvas id='board' style="border: 1px solid black;" ></canvas>
-    <script>
-        function getLengthWidth() {
-            const width = window.innerWidth
-            const height = window.innerHeight;
-            const length = Number.parseInt(((width > height ? height : width) * 0.9).toString())
-            const square = Number.parseInt((length / 17).toString())
-            return {
-                width: square * 17,
-                length: square
-            }
-        }
-        const {width,length} = getLengthWidth()
-        const canvas = document.getElementById('board')
-        canvas.width = width
-        canvas.height = width
-
-    </script>
+    <header>
+        <span id="score">Score: 0</span>
+        <div>
+            <button id="primary" type="button">Start</button>
+            <button id="restart" type="button">Restart</button>
+        </div>
+    </header>
+    <main id="stage">
+        <canvas id="board"></canvas>
+    </main>
     <script src="snake.js"></script>
 </body>
 </html>
