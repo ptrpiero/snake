@@ -3,6 +3,8 @@
 
 const Game = (() => {
 
+    const MIN_DELAY = 60 // ms
+
     let listener
 
     return {
@@ -10,11 +12,14 @@ const Game = (() => {
     }
 
     function init(Snake, Food, speed) {
-        Food.place()
-        if (isIn(Snake.body(), Food.position()))
-            return init(Snake, Food, speed)
         listener = Listener(Snake)
         listener.start()
+        return feed(Snake, Food, speed)
+    }
+
+    function feed(Snake, Food, speed) {
+        if (!Food.place(Snake.body())) return over(Snake, Food, 'You win!')
+        drawBord(Snake, Food)
         return play(Snake, Food, speed)
     }
 
@@ -25,21 +30,28 @@ const Game = (() => {
         function round(Snake, Food) {
             const food = Food.position()
 
-            drawBord(Snake, Food)
             Snake.move()
 
-            if (Snake.clash()) return
-            if (!Snake.meets(food)) return play(Snake, Food, speed)
-
-            Snake.eats(food)
-            return init(Snake, Food, speed - speed * 1 / 54)
+            if (Snake.clash()) return over(Snake, Food)
+            if (Snake.meets(food)) {
+                Snake.eats(food)
+                return feed(Snake, Food, Math.max(MIN_DELAY, speed - speed / 54))
+            }
+            drawBord(Snake, Food)
+            return play(Snake, Food, speed)
         }
+    }
 
-        function drawBord(Snake, Food) {
-            render()
-            Snake.render()
-            Food.render()
-        }
+    function over(Snake, Food, text = 'Game over') {
+        listener.stop()
+        drawBord(Snake, Food)
+        message(text)
+    }
+
+    function drawBord(Snake, Food) {
+        render()
+        Snake.render()
+        Food.render()
     }
 })()
 
@@ -62,6 +74,15 @@ function render(color = 'white', { x, y, l } = { x: 0, y: 0, l: width }) {
     canvas.fillRect(x, y, l, l)
 }
 
+function message(text) {
+    const canvas = document.getElementById('board').getContext('2d')
+    canvas.fillStyle = 'red'
+    canvas.font = `bold ${length}px sans-serif`
+    canvas.textAlign = 'center'
+    canvas.textBaseline = 'middle'
+    canvas.fillText(text, width / 2, width / 2)
+}
+
 function cell(x, y) {
     return {
         x: isNaN(x) ?
@@ -72,6 +93,10 @@ function cell(x, y) {
             y * length,
         l: length
     }
+}
+
+function cells(n = Math.floor(width / length)) {
+    return Array.from({ length: n * n }, (_, i) => cell(i % n, Math.floor(i / n)))
 }
 
 function coordinates({ x, y }) {
@@ -117,9 +142,12 @@ function isIn(line, point) {
 const Food = ((food) => {
 
     return {
-        place: () => { return food = cell() },
+        place: (taken = []) => {
+            const free = cells().filter((c) => !isIn(taken, c))
+            return food = free[Math.floor(Math.random() * free.length)]
+        },
         position: () => (food),
-        render: () => render('green', food)
+        render: () => food && render('green', food)
     }
 
 })()
@@ -127,6 +155,7 @@ const Food = ((food) => {
 const Snake = ((
 
     direction = Math.floor(Math.random() * 4),
+    moved = direction, // direction of the last executed move
     snake = ((head = cell(), len = 4) => {
         let snake = new Array(len).fill(head)
         return snake.map(({ x, y }, i) => place(
@@ -148,10 +177,10 @@ const Snake = ((
     }
 
     function turn(code) {
-        if (code === 0 && direction === directions['right'])    return
-        if (code === 1 && direction === directions['down'])     return
-        if (code === 2 && direction === directions['left'])     return
-        if (code === 3 && direction === directions['up'])       return
+        if (code === 0 && moved === directions['right'])    return
+        if (code === 1 && moved === directions['down'])     return
+        if (code === 2 && moved === directions['left'])     return
+        if (code === 3 && moved === directions['up'])       return
         direction = directions[directions[code]]
     }
 
@@ -160,9 +189,10 @@ const Snake = ((
             place(shift(coordinates(snake[0]), directions[direction]))
         )
         snake.pop()
+        moved = direction
 
         if (_stack.length > 0 && !isIn(snake, _stack[0])) {
-            snake.push(_stack.pop())
+            snake.push(_stack.shift())
         }
         return snake
     }
