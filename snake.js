@@ -3,107 +3,228 @@
 
 const Game = (() => {
 
+    const START_DELAY = 150 // ms
     const MIN_DELAY = 60 // ms
+    const LABELS = { ready: 'Start', running: 'Pause', paused: 'Resume', over: 'Play again' }
 
-    let listener
+    let snake, food, delay, timer, score, state, note
 
     return {
-        init
+        reset,
+        command,
+        draw
     }
 
-    function init(Snake, Food, speed) {
-        listener = Listener(Snake)
-        listener.start()
-        return feed(Snake, Food, speed)
+    function reset() {
+        clearTimeout(timer)
+        snake = Snake()
+        food = Food()
+        food.place(snake.body())
+        delay = START_DELAY
+        score = 0
+        show('ready', 'Swipe or press an arrow key')
     }
 
-    function feed(Snake, Food, speed) {
-        if (!Food.place(Snake.body())) return over(Snake, Food, 'You win!')
-        drawBord(Snake, Food)
-        return play(Snake, Food, speed)
+    function play() {
+        show('running')
+        tick()
     }
 
-    function play(Snake, Food, speed) {
-        
-        return setTimeout(round, speed, Snake, Food)
+    function tick() {
+        timer = setTimeout(round, delay)
+    }
 
-        function round(Snake, Food) {
-            const food = Food.position()
+    function round() {
+        const meal = food.position()
 
-            Snake.move()
+        snake.move()
 
-            if (Snake.clash()) return over(Snake, Food)
-            if (Snake.meets(food)) {
-                Snake.eats(food)
-                return feed(Snake, Food, Math.max(MIN_DELAY, speed - speed / 54))
-            }
-            drawBord(Snake, Food)
-            return play(Snake, Food, speed)
+        if (snake.clash()) return end('Game over')
+        if (snake.meets(meal)) {
+            snake.eats(meal)
+            score++
+            vibrate(30)
+            if (!food.place(snake.body())) return end('You win!')
+            delay = Math.max(MIN_DELAY, delay - delay / 54)
         }
+        draw()
+        tick()
     }
 
-    function over(Snake, Food, text = 'Game over') {
-        listener.stop()
-        drawBord(Snake, Food)
-        message(text)
+    function pause() {
+        if (state !== 'running') return
+        clearTimeout(timer)
+        show('paused', 'Paused')
     }
 
-    function drawBord(Snake, Food) {
+    function end(text) {
+        vibrate(200)
+        show('over', text)
+    }
+
+    // primary action: start, pause, resume or play again
+    function primary() {
+        if (state === 'running') return pause()
+        if (state === 'over') reset()
+        play()
+    }
+
+    function command(name) {
+        if (name === 'primary') return primary()
+        if (name === 'pause') return pause()
+        if (name === 'restart') {
+            reset()
+            return play()
+        }
+        if (name === 'tap') return (state === 'ready' || state === 'paused') && play()
+        if (!(name in directions)) return
+        if (state === 'ready') play()
+        if (state === 'running') snake.turn(directions[name])
+    }
+
+    function show(next, text) {
+        state = next
+        note = text
+        draw()
+    }
+
+    function draw() {
+        if (!snake) return
         render()
-        Snake.render()
-        Food.render()
+        snake.render()
+        food.render()
+        if (note) message(note)
+        document.getElementById('score').textContent = `Score: ${score}`
+        document.getElementById('primary').textContent = LABELS[state]
+        document.getElementById('restart').disabled = state === 'ready'
     }
 })()
 
-function Listener(snake){
-    const keyHandler = ({ code }) => {
-        if (!code.includes('Arrow')) return
-        snake.turn(directions[code.replace('Arrow','').toLocaleLowerCase()])
+// input =========================================
+
+// maps keyboard, swipes and buttons to the same commands:
+// left, up, right, down, primary, pause, restart, tap
+function Input(command) {
+    const KEYS = {
+        ArrowLeft: 'left', KeyA: 'left',
+        ArrowUp: 'up', KeyW: 'up',
+        ArrowRight: 'right', KeyD: 'right',
+        ArrowDown: 'down', KeyS: 'down',
+        Space: 'primary', KeyP: 'primary',
+        Escape: 'pause',
+        KeyR: 'restart'
     }
-    return {
-        start: () => document.addEventListener("keydown",keyHandler),
-        stop: () => document.removeEventListener("keydown",keyHandler)
+
+    document.addEventListener('keydown', (event) => {
+        const name = KEYS[event.code]
+        if (!name) return
+        // a focused button handles Space itself
+        if (event.code === 'Space' && event.target.closest('button')) return
+        event.preventDefault()
+        command(name)
+    })
+
+    Swipe(document.getElementById('stage'), command)
+
+    ;['primary', 'restart'].forEach((id) => {
+        document.getElementById(id).addEventListener('click', (event) => {
+            event.currentTarget.blur()
+            command(id)
+        })
+    })
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) command('pause')
+    })
+}
+
+// one direction per gesture, taken from the dominant axis once the
+// pointer has moved at least `min` css pixels; no movement is a tap
+function Swipe(target, command, min = 24) {
+    let origin
+
+    target.addEventListener('pointerdown', (event) => {
+        origin = { x: event.clientX, y: event.clientY, id: event.pointerId, done: false }
+        target.setPointerCapture(event.pointerId)
+    })
+
+    target.addEventListener('pointermove', (event) => {
+        if (!origin || origin.done || event.pointerId !== origin.id) return
+        const dx = event.clientX - origin.x
+        const dy = event.clientY - origin.y
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < min) return
+        origin.done = true
+        command(Math.abs(dx) > Math.abs(dy) ?
+            (dx < 0 ? 'left' : 'right') :
+            (dy < 0 ? 'up' : 'down'))
+    })
+
+    const release = (event) => {
+        if (!origin || event.pointerId !== origin.id) return
+        if (event.type === 'pointerup' && !origin.done) command('tap')
+        origin = undefined
     }
+    target.addEventListener('pointerup', release)
+    target.addEventListener('pointercancel', release)
 }
 
 // utils ===================================
 
-function render(color = 'white', { x, y, l } = { x: 0, y: 0, l: width }) {
-    const canvas = document.getElementById('board').getContext('2d')
+const GRID = 17 // cells per side
+
+let cellSize // css pixels, set by resize()
+
+function context() {
+    return document.getElementById('board').getContext('2d')
+}
+
+// size the board to the stage, with a backing store scaled by devicePixelRatio
+function resize() {
+    const stage = document.getElementById('stage')
+    const canvas = document.getElementById('board')
+    const border = 2
+    const room = Math.min(stage.clientWidth, stage.clientHeight) - border
+    const ratio = window.devicePixelRatio || 1
+
+    cellSize = Math.max(1, Math.floor(room / GRID))
+    const size = cellSize * GRID
+
+    canvas.style.width = `${size}px`
+    canvas.style.height = `${size}px`
+    canvas.width = Math.round(size * ratio)
+    canvas.height = Math.round(size * ratio)
+    context().setTransform(ratio, 0, 0, ratio, 0, 0)
+}
+
+// x, y and l are in cells; the default clears the whole board
+function render(color = 'white', { x, y, l = 1 } = { x: 0, y: 0, l: GRID }) {
+    const canvas = context()
     canvas.fillStyle = color
-    canvas.fillRect(x, y, l, l)
+    canvas.fillRect(x * cellSize, y * cellSize, l * cellSize, l * cellSize)
 }
 
 function message(text) {
-    const canvas = document.getElementById('board').getContext('2d')
+    const canvas = context()
+    const size = cellSize * GRID
+    canvas.fillStyle = 'rgba(255, 255, 255, 0.8)'
+    canvas.fillRect(0, size / 2 - cellSize * 1.5, size, cellSize * 3)
     canvas.fillStyle = 'red'
-    canvas.font = `bold ${length}px sans-serif`
+    canvas.font = `bold ${Math.round(cellSize * 0.9)}px sans-serif`
     canvas.textAlign = 'center'
     canvas.textBaseline = 'middle'
-    canvas.fillText(text, width / 2, width / 2)
+    canvas.fillText(text, size / 2, size / 2, size - cellSize)
 }
 
-function cell(x, y) {
-    return {
-        x: isNaN(x) ?
-            Math.floor(Math.random() * width / length) * length :
-            x * length,
-        y: isNaN(y) ?
-            Math.floor(Math.random() * width / length) * length :
-            y * length,
-        l: length
-    }
+function vibrate(ms) {
+    if (navigator.vibrate) navigator.vibrate(ms)
 }
 
-function cells(n = Math.floor(width / length)) {
-    return Array.from({ length: n * n }, (_, i) => cell(i % n, Math.floor(i / n)))
+function random(max) {
+    return Math.floor(Math.random() * max)
 }
 
-function coordinates({ x, y }) {
-    return {
-        x: Math.floor(x / length),
-        y: Math.floor(y / length)
-    }
+function cells() {
+    return Array.from({ length: GRID * GRID }, (_, i) => ({ x: i % GRID, y: Math.floor(i / GRID) }))
 }
 
 const directions = (function (directions = {}) {
@@ -115,18 +236,22 @@ const directions = (function (directions = {}) {
 })()
 
 function shift({ x, y }, direction, i = 1) {
-    if (direction === directions[0]) return { x: x - i, y } // left
-    if (direction === directions[1]) return { x, y: y - i } // up
-    if (direction === directions[2]) return { x: x + i, y } // rigth
-    if (direction === directions[3]) return { x, y: y + i } // down
+    if (direction === directions['left'])   return { x: x - i, y }
+    if (direction === directions['up'])     return { x, y: y - i }
+    if (direction === directions['right'])  return { x: x + i, y }
+    if (direction === directions['down'])   return { x, y: y + i }
 }
 
-function place({ x, y }, max = Math.floor(width / length) - 1) {
-    if (x < 0) x = max
-    if (y < 0) y = max
-    if (x > max) x = 0
-    if (y > max) y = 0
-    return { x, y, } = cell(x, y)
+function opposite(direction) {
+    return (direction + 2) % 4
+}
+
+// wrap a cell around the board edges
+function place({ x, y }) {
+    return {
+        x: (x % GRID + GRID) % GRID,
+        y: (y % GRID + GRID) % GRID
+    }
 }
 
 function equals({ x: ax, y: ay }, { x: bx, y: by }) {
@@ -139,31 +264,26 @@ function isIn(line, point) {
 
 // models  =========================================
 
-const Food = ((food) => {
+function Food() {
+
+    let food
 
     return {
         place: (taken = []) => {
             const free = cells().filter((c) => !isIn(taken, c))
-            return food = free[Math.floor(Math.random() * free.length)]
+            return food = free[random(free.length)]
         },
         position: () => (food),
         render: () => food && render('green', food)
     }
+}
 
-})()
+function Snake(direction = random(4), len = 4) {
 
-const Snake = ((
-
-    direction = Math.floor(Math.random() * 4),
-    moved = direction, // direction of the last executed move
-    snake = ((head = cell(), len = 4) => {
-        let snake = new Array(len).fill(head)
-        return snake.map(({ x, y }, i) => place(
-            shift(coordinates({ x, y }), directions[direction], i * -1)))
-    })(),
-    _stack = []
-
-) => {
+    const head = { x: random(GRID), y: random(GRID) }
+    const pending = [] // eaten food, appended once the tail has passed it
+    let moved = direction // direction of the last executed move
+    let snake = Array.from({ length: len }, (_, i) => place(shift(head, direction, -i)))
 
     return {
         head: () => snake[0],
@@ -172,33 +292,39 @@ const Snake = ((
         turn: (where) => turn(where),
         meets: (thing) => equals(snake[0], thing),
         clash: (thing = snake[0]) => isIn(snake.slice(1), thing),
-        eats: (food) => _stack.push(food),
-        render: () => snake.forEach(p => render('black', p)),
+        eats: (food) => pending.push(food),
+        render: () => snake.forEach((p) => render('black', p)),
     }
 
-    function turn(code) {
-        if (code === 0 && moved === directions['right'])    return
-        if (code === 1 && moved === directions['down'])     return
-        if (code === 2 && moved === directions['left'])     return
-        if (code === 3 && moved === directions['up'])       return
-        direction = directions[directions[code]]
+    function turn(where) {
+        if (where === opposite(moved)) return
+        direction = where
     }
 
     function move() {
-        snake.splice(0, 0,
-            place(shift(coordinates(snake[0]), directions[direction]))
-        )
-        snake.pop()
+        const body = [place(shift(snake[0], direction)), ...snake.slice(0, -1)]
         moved = direction
 
-        if (_stack.length > 0 && !isIn(snake, _stack[0])) {
-            snake.push(_stack.shift())
+        if (pending.length > 0 && !isIn(body, pending[0])) {
+            body.push(pending.shift())
         }
-        return snake
+        return body
     }
-})()
+}
 
 // run ===================================
 
-Game.init(Snake, Food, 150)
+let resizing
+function onResize() {
+    cancelAnimationFrame(resizing)
+    resizing = requestAnimationFrame(() => {
+        resize()
+        Game.draw()
+    })
+}
 
+resize()
+window.addEventListener('resize', onResize)
+window.addEventListener('orientationchange', onResize)
+Input(Game.command)
+Game.reset()
