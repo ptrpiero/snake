@@ -131,6 +131,7 @@ const Food = ((food) => {
 const Snake = ((
 
     direction = Math.floor(Math.random() * 4),
+    moved = direction, // direction of the last executed move
     snake = ((head = cell(), len = 4) => {
         let snake = new Array(len).fill(head)
         return snake.map(({ x, y }, i) => place(
@@ -152,10 +153,10 @@ const Snake = ((
     }
 
     function turn(code) {
-        if (code === 0 && direction === directions['right'])    return
-        if (code === 1 && direction === directions['down'])     return
-        if (code === 2 && direction === directions['left'])     return
-        if (code === 3 && direction === directions['up'])       return
+        if (code === 0 && moved === directions['right'])    return
+        if (code === 1 && moved === directions['down'])     return
+        if (code === 2 && moved === directions['left'])     return
+        if (code === 3 && moved === directions['up'])       return
         direction = directions[directions[code]]
     }
 
@@ -164,6 +165,7 @@ const Snake = ((
             place(shift(coordinates(snake[0]), directions[direction]))
         )
         snake.pop()
+        moved = direction
 
         if (_stack.length > 0 && !isIn(snake, _stack[0])) {
             snake.push(_stack.pop())
