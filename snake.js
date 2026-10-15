@@ -19,6 +19,7 @@ const Game = (() => {
         Food.place()
         if (isIn(Snake.body(), Food.position()))
             return feed(Snake, Food, speed)
+        drawBord(Snake, Food)
         return play(Snake, Food, speed)
     }
 
@@ -29,21 +30,28 @@ const Game = (() => {
         function round(Snake, Food) {
             const food = Food.position()
 
-            drawBord(Snake, Food)
             Snake.move()
 
-            if (Snake.clash()) return listener.stop()
-            if (!Snake.meets(food)) return play(Snake, Food, speed)
-
-            Snake.eats(food)
-            return feed(Snake, Food, speed - speed * 1 / 54)
+            if (Snake.clash()) return over(Snake, Food)
+            if (Snake.meets(food)) {
+                Snake.eats(food)
+                return feed(Snake, Food, speed - speed * 1 / 54)
+            }
+            drawBord(Snake, Food)
+            return play(Snake, Food, speed)
         }
+    }
 
-        function drawBord(Snake, Food) {
-            render()
-            Snake.render()
-            Food.render()
-        }
+    function over(Snake, Food) {
+        listener.stop()
+        drawBord(Snake, Food)
+        message('Game over')
+    }
+
+    function drawBord(Snake, Food) {
+        render()
+        Snake.render()
+        Food.render()
     }
 })()
 
@@ -64,6 +72,15 @@ function render(color = 'white', { x, y, l } = { x: 0, y: 0, l: width }) {
     const canvas = document.getElementById('board').getContext('2d')
     canvas.fillStyle = color
     canvas.fillRect(x, y, l, l)
+}
+
+function message(text) {
+    const canvas = document.getElementById('board').getContext('2d')
+    canvas.fillStyle = 'red'
+    canvas.font = `bold ${length}px sans-serif`
+    canvas.textAlign = 'center'
+    canvas.textBaseline = 'middle'
+    canvas.fillText(text, width / 2, width / 2)
 }
 
 function cell(x, y) {
